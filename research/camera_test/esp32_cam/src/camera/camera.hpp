@@ -1,7 +1,9 @@
-#ifndef CAM_CAMERA_HPP
-#define CAM_CAMERA_HPP
+#ifndef SRC_CAMERA_CAMERA_HPP
+#define SRC_CAMERA_CAMERA_HPP
+
 
 #include "esp_camera.h"
+
 
 #define CAMERA_MODEL_AI_THINKER
 #include "camera_pins.h"
