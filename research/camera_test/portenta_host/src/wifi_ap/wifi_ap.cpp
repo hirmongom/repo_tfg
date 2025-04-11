@@ -3,10 +3,7 @@
 
 WiFiAP::~WiFiAP()
 {
-	if (_server) {
-		delete _server;
-		_server = nullptr;
-	}
+
 }
 
 
@@ -16,25 +13,7 @@ bool WiFiAP::begin()
 		Serial.println("Failed to communicate with the WiFi module.");
 		return false;
 	}
-	_server = new WiFiServer(80);
 	WiFi.config(IPAddress(192, 168, 0, 1), IPAddress(255, 255, 255, 0), IPAddress(192, 168, 0, 1));
-
-	Serial.setTimeout(10000);
-	Serial.println("Provide a password for the Access Point (Min. 8 characters):");
-	String input = Serial.readStringUntil('\n');
-	if (input.length() == 0) {
-		Serial.println("No input received, using default password.");
-	}
-	else {
-		String sanePassword  = sanitizePassword(input);
-		if (sanePassword.length() < 8 || sanePassword.length() > 32) {
-			Serial.println("Invalid password length.");
-			Serial.println("Using default password.");
-		}
-		else {
-			_password = sanePassword.c_str();
-		}
-	}
 
 	int status = WiFi.beginAP(_ssid, _password);
 	if (status != WL_AP_LISTENING) {
@@ -47,9 +26,29 @@ bool WiFiAP::begin()
 	Serial.println(_ssid);
 	Serial.print("Password: ");
 	Serial.println(_password);
-	
-	_server->begin();
+	_status = status;	
+
 	return true;
+}
+
+
+void WiFiAP::update()
+{
+	hasDeviceConnected();
+}
+
+
+void WiFiAP::hasDeviceConnected()
+{
+	if (_status != WiFi.status()) {
+		_status = WiFi.status();
+		if (_status == WL_AP_CONNECTED) {
+			Serial.println("Device connected to AP.");
+		}
+		else {
+			Serial.println("Device disconnected from AP.");
+		}
+	}
 }
 
 
