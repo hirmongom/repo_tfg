@@ -4,6 +4,8 @@
 WiFiAPConnection connection;
 WiFiWebServer server;
 
+
+/******************************************************************************/
 void setup()
 {
 	Serial.begin(112500);
@@ -16,6 +18,7 @@ void setup()
 }
 
 
+/******************************************************************************/
 void loop()
 {
 	server.handleClient();

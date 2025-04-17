@@ -17,7 +17,6 @@ public:
 	WiFiAP() = default; 
 	~WiFiAP();
 	bool begin();
-	void update();
 	String getDeviceAndNetworkInfo();
 
 private:

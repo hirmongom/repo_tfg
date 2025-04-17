@@ -1,19 +1,25 @@
 #include "wifi_ap.hpp"
 
 
+/******************************************************************************/
 WiFiAP::~WiFiAP()
 {
 
 }
 
 
+/******************************************************************************/
 bool WiFiAP::begin()
 {
 	if (WiFi.status() == WL_NO_MODULE) {
 		Serial.println("Failed to communicate with the WiFi module.");
 		return false;
 	}
-	WiFi.config(IPAddress(192, 168, 0, 1), IPAddress(255, 255, 255, 0), IPAddress(192, 168, 0, 1));
+	WiFi.config(
+		IPAddress(192, 168, 0, 1), 
+		IPAddress(255, 255, 255, 0), 
+		IPAddress(192, 168, 0, 1)
+	);
 
 	int status = WiFi.beginAP(_ssid, _password);
 	if (status != WL_AP_LISTENING) {
@@ -32,12 +38,7 @@ bool WiFiAP::begin()
 }
 
 
-void WiFiAP::update()
-{
-	hasDeviceConnected();
-}
-
-
+/******************************************************************************/
 void WiFiAP::hasDeviceConnected()
 {
 	if (_status != WiFi.status()) {
@@ -52,6 +53,7 @@ void WiFiAP::hasDeviceConnected()
 }
 
 
+/******************************************************************************/
 String WiFiAP::getDeviceAndNetworkInfo() {
 	String info = "";
 	
@@ -89,6 +91,7 @@ String WiFiAP::getDeviceAndNetworkInfo() {
 }
 
 
+/******************************************************************************/
 String WiFiAP::sanitizePassword(String input)
 {
 	input.trim();   
@@ -99,7 +102,9 @@ String WiFiAP::sanitizePassword(String input)
 	input.replace("\\", "");
 	input.replace(" ", "");
 
-	String allowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>/?";
+	String allowed = 
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+		"0123456789!@#$%^&*()-_=+[]{}|;:,.<>/?";
 	String sanitized = "";
 	for (size_t i = 0; i < input.length(); i++) {
 		char c = input.charAt(i);

@@ -1,6 +1,7 @@
 #include "camera.hpp"
 
 
+/******************************************************************************/
 const camera_config_t Camera::_config = {
 	.pin_pwdn = PWDN_GPIO_NUM,
 	.pin_reset = RESET_GPIO_NUM,
@@ -33,10 +34,11 @@ const camera_config_t Camera::_config = {
 	.jpeg_quality = 12, // Lower number = better quality (0-63)
 	.fb_count = 2, // Set to 2 if using PSRAM
 	.fb_location = CAMERA_FB_IN_PSRAM, // Use PSRAM if available
-	.grab_mode = CAMERA_GRAB_LATEST // Change to CAMERA_GRAB_LATEST for faster updates
+	.grab_mode = CAMERA_GRAB_LATEST
 };
 
 
+/******************************************************************************/
 bool Camera::begin()
 {
 	esp_err_t err = esp_camera_init(&Camera::_config);
@@ -48,12 +50,14 @@ bool Camera::begin()
 }
 
 
+/******************************************************************************/
 camera_fb_t* Camera::capture()
 {
 	return esp_camera_fb_get();
 }
 
 
+/******************************************************************************/
 void Camera::release(camera_fb_t *fb)
 {
 	esp_camera_fb_return(fb);
