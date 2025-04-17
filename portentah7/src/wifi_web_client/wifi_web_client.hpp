@@ -33,6 +33,7 @@ public:
 private:
 	void waitForServerConnected();
 	bool connectToServer();
+	String parseStatusCode(uint8_t code);
 	String getResponse(uint16_t timeout_ms);
 	HttpResponse parseHttpResponse(const String &response);
 	String getHeaderField(const String &headers, const String &field);

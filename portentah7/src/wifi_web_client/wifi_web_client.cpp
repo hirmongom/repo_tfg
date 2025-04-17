@@ -30,20 +30,7 @@ uint8_t WiFiWebClient::status() {
 /******************************************************************************/
 uint8_t WiFiWebClient::status(String &status_out) {
 	uint8_t code = status();
-	switch (code) {
-		case WL_NO_SHIELD:				status_out = "WL_NO_SHIELD";				break;
-		case WL_IDLE_STATUS:			status_out = "WL_IDLE_STATUS";			break;
-		case WL_NO_SSID_AVAIL:		status_out = "WL_NO_SSID_AVAIL";		break;
-		case WL_SCAN_COMPLETED:		status_out = "WL_SCAN_COMPLETED";		break;
-		case WL_CONNECTED:				status_out = "WL_CONNECTED";				break;
-		case WL_CONNECT_FAILED:		status_out = "WL_CONNECT_FAILED";		break;
-		case WL_CONNECTION_LOST:	status_out = "WL_CONNECTION_LOST";	break;
-		case WL_DISCONNECTED:			status_out = "WL_DISCONNECTED";			break;
-		case WL_AP_LISTENING:			status_out = "WL_AP_LISTENING";			break;
-		case WL_AP_CONNECTED:			status_out = "WL_AP_CONNECTED";			break;
-		case WL_AP_FAILED:				status_out = "WL_AP_FAILED";				break;
-		default:									status_out = "UNKNOWN_STATUS";			break;
-	}
+	status_out = parseStatusCode(code);
 	return code;
 }
 
@@ -123,12 +110,40 @@ bool WiFiWebClient::connectToServer()
 
 
 /******************************************************************************/
+String WiFiWebClient::parseStatusCode(uint8_t code)
+{
+	String status_str;
+	switch (code) {
+		case WL_NO_SHIELD:				status_str = "WL_NO_SHIELD";				break;
+		case WL_IDLE_STATUS:			status_str = "WL_IDLE_STATUS";			break;
+		case WL_NO_SSID_AVAIL:		status_str = "WL_NO_SSID_AVAIL";		break;
+		case WL_SCAN_COMPLETED:		status_str = "WL_SCAN_COMPLETED";		break;
+		case WL_CONNECTED:				status_str = "WL_CONNECTED";				break;
+		case WL_CONNECT_FAILED:		status_str = "WL_CONNECT_FAILED";		break;
+		case WL_CONNECTION_LOST:	status_str = "WL_CONNECTION_LOST";	break;
+		case WL_DISCONNECTED:			status_str = "WL_DISCONNECTED";			break;
+		case WL_AP_LISTENING:			status_str = "WL_AP_LISTENING";			break;
+		case WL_AP_CONNECTED:			status_str = "WL_AP_CONNECTED";			break;
+		case WL_AP_FAILED:				status_str = "WL_AP_FAILED";				break;
+		default:									status_str = "UNKNOWN_STATUS";			break;
+	}
+	return status_str;
+}
+
+
+/******************************************************************************/
 String WiFiWebClient::getResponse(uint16_t timeout_ms)
 {
 	String headers = "";
-	String body = ""; // @TODO fill body if content in header
+	String body = "";
 	unsigned long start_time = millis();
-	
+
+	while (!_client.available()) {
+		if (millis() - start_time > timeout_ms) {
+			return "Timeout";
+		}
+	}
+
 	while (_client.available()) {
 		if (body.endsWith("\r\n\r\n")) {
 			_client.flush();
@@ -143,6 +158,7 @@ String WiFiWebClient::getResponse(uint16_t timeout_ms)
 			return "Timeout";
 		}
 	}
+
 	String response = "Headers:\n" + headers + "\nBody: \n" + body;
 	return response; 
 }
