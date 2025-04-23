@@ -24,10 +24,13 @@ void setup()
 		while (1);
 	}
 
+	Serial.println("\n================\nFirst Message Wave");
 	serverCheck();
-	delay(20000);
+	delay(5000);
+	Serial.println("\n================\nSecond Message Wave");
 	serverCheck();
-	delay(10000);
+	delay(5000);
+	Serial.println("\n================\nThird Message Wave");
 	serverCheck();
 }
 
@@ -46,27 +49,27 @@ void loop()
 /******************************************************************************/
 void serverCheck()
 {
-	String ret;
+	HttpResponse ret;
 
 	client.verifyConnection();
 
 	ret = client.serverRoot();
 	Serial.println("Server root:");
-	Serial.println(ret);
-
+	Serial.println(WiFiWebClient::httpResponseToString(ret));
+	
 	ret = client.serverPing();
 	Serial.println("Server ping:");
-	Serial.println(ret);
+	Serial.println(WiFiWebClient::httpResponseToString(ret));
 
 	ret = client.serverIP();
 	Serial.println("Server ip:");
-	Serial.println(ret);
+	Serial.println(WiFiWebClient::httpResponseToString(ret));
 
 	ret = client.serverMac();
 	Serial.println("Server mac:");
-	Serial.println(ret);
-
-	ret = client.serverGet("error");
+	Serial.println(WiFiWebClient::httpResponseToString(ret));
+	
+	ret = client.serverGet("thisisnotaproperuri");
 	Serial.println("Server not found:");
-	Serial.println(ret);
+	Serial.println(WiFiWebClient::httpResponseToString(ret));
 }

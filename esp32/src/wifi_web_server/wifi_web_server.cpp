@@ -57,6 +57,9 @@ void WiFiWebServer::handleClient()
 					}
 				}
 			}	
+			else {
+				Serial.println("Malformed HTTP Request.");
+			}
 		}
 	}
 }
@@ -84,13 +87,6 @@ bool WiFiWebServer::parseRequest(const String &requestLine, String *method,
 /******************************************************************************/
 void WiFiWebServer::handleNone(WiFiClient *client)
 {
-	if (!client->connected()) {
-		Serial.print("Waiting for client.");
-		while (!client->connected()) {
-			Serial.print(".");
-		}
-		Serial.println();
-	}
 	client->print("HTTP/1.1 404 Not Found\r\n\r\n");
 }
 
@@ -98,13 +94,6 @@ void WiFiWebServer::handleNone(WiFiClient *client)
 /******************************************************************************/
 void WiFiWebServer::handleRoot(WiFiClient *client)
 {
-	if (!client->connected()) {
-		Serial.print("Waiting for client.");
-		while (!client->connected()) {
-			Serial.print(".");
-		}
-		Serial.println();
-	}
 	client->print("HTTP/1.1 204 No Content\r\n\r\n");
 }
 
@@ -112,16 +101,9 @@ void WiFiWebServer::handleRoot(WiFiClient *client)
 /******************************************************************************/
 void WiFiWebServer::handlePing(WiFiClient *client)
 {
-	if (!client->connected()) {
-		Serial.print("Waiting for client.");
-		while (!client->connected()) {
-			Serial.print(".");
-		}
-		Serial.println();
-	}
 	String body = "Pong!";
-	client->print("HTTP/1.1 200 OK\n");
-	client->print("Content-Type: text/plain\n");
+	client->print("HTTP/1.1 200 OK\r\n");
+	client->print("Content-Type: text/plain\r\n");
 	client->print("Content-Length: ");
 	client->print(body.length());
 	client->print("\r\n\r\n");
@@ -133,16 +115,9 @@ void WiFiWebServer::handlePing(WiFiClient *client)
 /******************************************************************************/
 void WiFiWebServer::handleIP(WiFiClient *client) 
 {
-	if (!client->connected()) {
-		Serial.print("Waiting for client.");
-		while (!client->connected()) {
-			Serial.print(".");
-		}
-		Serial.println();
-	}
 	String body = WiFi.localIP().toString();
-	client->print("HTTP/1.1 200 OK\n");
-	client->print("Content-Type: text/plain\n");
+	client->print("HTTP/1.1 200 OK\r\n");
+	client->print("Content-Type: text/plain\r\n");
 	client->print("Content-Length: ");
 	client->print(body.length());
 	client->print("\r\n\r\n");
@@ -154,16 +129,9 @@ void WiFiWebServer::handleIP(WiFiClient *client)
 /******************************************************************************/
 void WiFiWebServer::handleMac(WiFiClient *client)
 {
-	if (!client->connected()) {
-		Serial.print("Waiting for client.");
-		while (!client->connected()) {
-			Serial.print(".");
-		}
-		Serial.println();
-	}
 	String body = WiFi.macAddress();
-	client->print("HTTP/1.1 200 OK\n");
-	client->print("Content-Type: text/plain\n");
+	client->print("HTTP/1.1 200 OK\r\n");
+	client->print("Content-Type: text/plain\r\n");
 	client->print("Content-Length: ");
 	client->print(body.length());
 	client->print("\r\n\r\n");

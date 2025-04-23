@@ -1,1 +1,2 @@
-@TODO Fix Communication desync through HTTP
+@TODO send image from esp32 to portenta through http
+@TODO store images on portenta sd card as video

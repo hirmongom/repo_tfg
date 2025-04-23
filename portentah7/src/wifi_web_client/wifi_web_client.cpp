@@ -36,7 +36,7 @@ uint8_t WiFiWebClient::status(String &status_out) {
 
 
 /******************************************************************************/
-String WiFiWebClient::serverGet(String uri)
+HttpResponse WiFiWebClient::serverGet(String uri)
 {
 	String request = "GET /";
 	request += uri;
@@ -47,7 +47,7 @@ String WiFiWebClient::serverGet(String uri)
 
 
 /******************************************************************************/
-String WiFiWebClient::serverRoot()
+HttpResponse WiFiWebClient::serverRoot()
 {
 	_client.print("GET / HTTP/1.1\r\n\r\n");
 	return getResponse(5000);
@@ -55,7 +55,7 @@ String WiFiWebClient::serverRoot()
 
 
 /******************************************************************************/
-String WiFiWebClient::serverPing()
+HttpResponse WiFiWebClient::serverPing()
 {
 	_client.print("GET /ping HTTP/1.1\r\n\r\n");
 	return getResponse(5000);
@@ -63,7 +63,7 @@ String WiFiWebClient::serverPing()
 
 
 /******************************************************************************/
-String WiFiWebClient::serverIP()
+HttpResponse WiFiWebClient::serverIP()
 {
 	_client.print("GET /ip HTTP/1.1\r\n\r\n");
 	return getResponse(5000);
@@ -71,7 +71,7 @@ String WiFiWebClient::serverIP()
 
 
 /******************************************************************************/
-String WiFiWebClient::serverMac()
+HttpResponse WiFiWebClient::serverMac()
 {
 	_client.print("GET /mac HTTP/1.1\r\n\r\n");
 	return getResponse(5000);
@@ -110,6 +110,15 @@ bool WiFiWebClient::connectToServer()
 
 
 /******************************************************************************/
+void WiFiWebClient::flushRecvBuffer()
+{
+	while (_client.available()) {
+		_client.read();
+	}
+}
+
+
+/******************************************************************************/
 String WiFiWebClient::parseStatusCode(uint8_t code)
 {
 	String status_str;
@@ -132,33 +141,113 @@ String WiFiWebClient::parseStatusCode(uint8_t code)
 
 
 /******************************************************************************/
-String WiFiWebClient::getResponse(uint16_t timeout_ms)
+HttpResponse WiFiWebClient::getResponse(uint32_t timeout_ms)
+/*
+ * The function client.flush() lacks any implementation
+ * From "SocketWrapper/src/MbedClient.cpp"
+ * on "ArduinoCore-mbed".
+ */
 {
-	String headers = "";
-	String body = "";
-	unsigned long start_time = millis();
+	HttpResponse response;
+	uint32_t content_length = 0;
+	uint32_t start_time = millis();
 
 	while (!_client.available()) {
 		if (millis() - start_time > timeout_ms) {
-			return "Timeout";
+			response.headers = 
+				"HTTP/1.1 500 Internal Server Error\r\n"
+				"Content-Type: text/plain\r\n"
+				"Content-Length: 7";
+			response.body = "Timeout";
+			flushRecvBuffer();
+			return response;
 		}
 	}
 
-	while (_client.available()) {
-		if (body.endsWith("\r\n\r\n")) {
-			_client.flush();
-		}
-		if (headers.endsWith("\r\n\r\n")) {
-			body += (char)_client.read();	
-		}
-		else {
-			headers += (char)_client.read();
-		}
-		if (millis() - start_time > timeout_ms) {
-			return "Timeout";
-		}
+	if (!getHeaders(response, start_time, timeout_ms)) {
+		flushRecvBuffer();
+		return response;
 	}
 
-	String response = "Headers:\n" + headers + "\nBody: \n" + body;
+	content_length = (uint32_t)getHeaderField(response, "Content-Length").toInt();	
+	if (content_length > 0) {
+		if (!getBody(response, start_time, timeout_ms, content_length)) {
+			flushRecvBuffer();
+			return response;
+		}
+	}
+	else {
+		response.body = "";
+	}
+	flushRecvBuffer();
+
 	return response; 
+}
+
+
+/******************************************************************************/
+bool WiFiWebClient::getHeaders(HttpResponse &response_out, uint32_t start_time,
+	uint32_t timeout)
+{
+	while (!response_out.headers.endsWith("\r\n\r\n")) {
+		if (millis() - start_time > timeout) {
+			response_out.headers = 
+				"HTTP/1.1 500 Internal Server Error\r\n"
+				"Content-Type: text/plain\r\n"
+				"Content-Length: 7";
+			response_out.body = "Timeout during header read.";
+			return false;
+		}
+		if (_client.available()) {
+			response_out.headers += (char)_client.read();
+		}
+	}
+	response_out.headers = response_out.headers.substring(
+		0, 
+		response_out.headers.length() - 4
+	);
+	return true;
+}
+
+
+/******************************************************************************/
+bool WiFiWebClient::getBody(HttpResponse &response_out, uint32_t start_time,
+	uint32_t timeout, uint32_t length)
+{
+	size_t bytes_read = 0;
+	while (bytes_read < length) {
+		if (millis() - start_time > timeout) {
+			response_out.headers = 
+				"HTTP/1.1 500 Internal Server Error\r\n"
+				"Content-Type: text/plain\r\n"
+				"Content-Length: 7";
+			response_out.body = "Timeout during body read.";
+			return false;
+		}
+		if (_client.available()) {
+			response_out.body += (char)_client.read();
+			++bytes_read;
+		}
+	}
+	return true;
+}
+
+
+/******************************************************************************/
+String WiFiWebClient::getHeaderField(const HttpResponse &response, 
+	const String &field)
+{
+	String lookFor = field + ": ";
+	int start = response.headers.indexOf(lookFor);
+	if (start < 0) {
+		return "";
+	}
+
+	start += lookFor.length();
+	int end = response.headers.indexOf("\r\n", start);
+	if (end < 0) {
+		end = response.headers.length();
+	}
+
+	return response.headers.substring(start, end);
 }
