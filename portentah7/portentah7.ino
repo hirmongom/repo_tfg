@@ -32,6 +32,9 @@ void setup()
 	delay(5000);
 	Serial.println("\n================\nThird Message Wave");
 	serverCheck();
+	Serial.println("\n================\nGetting frame");
+	HttpResponse frame = client.serverCapture();
+	Serial.println(WiFiWebClient::httpResponseToString(frame));
 }
 
 

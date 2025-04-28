@@ -27,6 +27,7 @@ public:
 	HttpResponse serverPing();
 	HttpResponse serverIP();
 	HttpResponse serverMac();
+	HttpResponse serverCapture();
 
 private:
 	WiFiClient _client;

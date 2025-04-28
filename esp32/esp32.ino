@@ -1,8 +1,9 @@
 #include "src/wifi_ap_connection/wifi_ap_connection.hpp"
-#include "src/wifi_web_server/wifi_web_server.hpp"
+#include "src/camera_server/camera_server.hpp"
+
 
 WiFiAPConnection connection;
-WiFiWebServer server;
+CameraServer server;
 
 
 /******************************************************************************/

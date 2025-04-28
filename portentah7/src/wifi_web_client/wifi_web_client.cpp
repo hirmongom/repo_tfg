@@ -79,6 +79,13 @@ HttpResponse WiFiWebClient::serverMac()
 
 
 /******************************************************************************/
+HttpResponse WiFiWebClient::serverCapture() 
+{
+	_client.print("GET /capture HTTP/1.1\r\n\r\n");
+	return getResponse(500000);
+}
+
+/******************************************************************************/
 void WiFiWebClient::waitForServerConnected()
 {
 	Serial.print("Waiting for server to connect to AP");
