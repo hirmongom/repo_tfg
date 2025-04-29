@@ -4,177 +4,147 @@
 /******************************************************************************/
 bool CameraServer::begin()
 {
-	esp_err_t err = esp_camera_init(&camera_config);
-	if (err != ESP_OK) {
-		Serial.println("Failed to initialize camera.");
+	WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
+	if (!beginWiFi()) {
+		return false;
+	}
+	if (!beginCam()) {
+		return false;
+	}
+	if (!beginCamServer()) {
 		return false;
 	}
 
-	if (WiFi.status() != WL_CONNECTED) {
-		Serial.println("Not connected to a WiFi network. Aborting.");
-		return false;
-	}	
-
-	// if (!_server) {
-	// 	Serial.println("Failed creating web server.");
-	// 	return false;
-	// }
-
-	_server.begin();
-	Serial.println("Server created.");
-
+	Serial.println("Camera Server Started at:");
+	Serial.print("\thttp://");
+  Serial.println(WiFi.localIP());
 	return true;
 }
 
 
 /******************************************************************************/
-void CameraServer::handleClient()
+bool CameraServer::beginWiFi()
 {
-	WiFiClient client = _server.accept();
-	if (!client) {
-		return;
-	}
-	while (client.connected()) {
-		if (client.available()) {
-			String request = client.readStringUntil('\r');
-			client.clear();
-
-			Serial.println("Client request:");
-			Serial.println(request);
-			Serial.println();
-
-			String method, uri, protocol;
-			if (parseRequest(request, &method, &uri, &protocol)) {
-				if (method == "GET" && protocol == "HTTP/1.1") {
-					if (uri == "/") {
-						handleRoot(client);
-					}
-					else if (uri == "/ping") {
-						handlePing(client);
-					}
-					else if (uri == "/ip") {
-						handleIP(client);
-					}
-					else if (uri == "/mac") {
-						handleMac(client);
-					}
-					else if (uri == "/capture") {
-						handleCapture(client);
-					}
-					else {
-						handleNone(client);
-					}
-				}
-			}	
-			else {
-				Serial.println("Malformed HTTP Request.");
-			}
-		}
-	}
-}
-
-
-/******************************************************************************/
-bool CameraServer::parseRequest(const String &requestLine, String *method, 
-	String *uri, String *protocol) 
-{
-	// The request line should be in the form: "GET /uri HTTP/1.1"
-	int firstSpace = requestLine.indexOf(' ');
-	int secondSpace = requestLine.indexOf(' ', firstSpace + 1);
-	
-	if (firstSpace != -1 && secondSpace != -1) {
-		*method = requestLine.substring(0, firstSpace);
-		*uri = requestLine.substring(firstSpace + 1, secondSpace);
-		*protocol = requestLine.substring(secondSpace + 1);
-		return true;
-	} else {
+	if (WiFi.status() == WL_NO_SHIELD) {
+		Serial.println("Failed to communicate with the WiFi module.");
 		return false;
 	}
+
+	Serial.print("Connecting to WiFi.");
+	WiFi.begin(_ssid, _password);
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(500);
+		Serial.print(".");
+	}
+	Serial.println();
+
+	Serial.println("WiFi connected.");	
+	return true;
 }
 
 
 /******************************************************************************/
-void CameraServer::handleNone(WiFiClient &client)
+bool CameraServer::beginCam()
 {
-	client.print("HTTP/1.1 404 Not Found\r\n\r\n");
-}
-
-
-/******************************************************************************/
-void CameraServer::handleRoot(WiFiClient &client)
-{
-	client.print("HTTP/1.1 204 No Content\r\n\r\n");
-}
-
-
-/******************************************************************************/
-void CameraServer::handlePing(WiFiClient &client)
-{
-	String body = "Pong!";
-	client.print("HTTP/1.1 200 OK\r\n");
-	client.print("Content-Type: text/plain\r\n");
-	client.print("Content-Length: ");
-	client.print(body.length());
-	client.print("\r\n\r\n");
-	client.print(body);
-	client.print("\r\n\r\n");
-}
-
-
-/******************************************************************************/
-void CameraServer::handleIP(WiFiClient &client) 
-{
-	String body = WiFi.localIP().toString();
-	client.print("HTTP/1.1 200 OK\r\n");
-	client.print("Content-Type: text/plain\r\n");
-	client.print("Content-Length: ");
-	client.print(body.length());
-	client.print("\r\n\r\n");
-	client.print(body);
-	client.print("\r\n\r\n");
-}
-
-
-/******************************************************************************/
-void CameraServer::handleMac(WiFiClient &client)
-{
-	String body = WiFi.macAddress();
-	client.print("HTTP/1.1 200 OK\r\n");
-	client.print("Content-Type: text/plain\r\n");
-	client.print("Content-Length: ");
-	client.print(body.length());
-	client.print("\r\n\r\n");
-	client.print(body);
-	client.print("\r\n\r\n");
-}
-
-
-/******************************************************************************/
-void CameraServer::handleCapture(WiFiClient &client)
-{
-	camera_fb_t *fb = NULL;
-	fb = esp_camera_fb_get();
-
-	if (!fb) {
-		const char *errHdr =
-			"HTTP/1.1 500 Internal Server Error\r\n"
-			"Content-Length: 0\r\n\r\n";
-		client.print(errHdr);
-		return;
+	// @TODO configure sensor to use appropiate capture window
+	Serial.println("Initializing Camera");
+	esp_err_t err = esp_camera_init(&camera_config);
+	if (err != ESP_OK) {
+		Serial.printf("Camera init failed with error 0x%x", err);
+		return false;
 	}
 
-	client.print("HTTP/1.1 200 OK\r\n");
-	client.print("Content-Type: text/plain\r\n");
-	client.print("Content-Length: ");
-	client.print(fb->len);
-	client.print("\r\n\r\n");
-	
-	client.write(fb->buf, fb->len);
-	client.print("\r\n\r\n");
-	
-	Serial.println("Camera capture:");
-	Serial.print("\tLength = ");
-	Serial.println(fb->len);
+	Serial.println("Camera Initialized");
+	return true;
+}
 
-	esp_camera_fb_return(fb);
+
+/******************************************************************************/
+bool CameraServer::beginCamServer()
+{
+	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+	config.server_port = 80;
+
+	httpd_uri_t index_uri = {
+		.uri       = "/",
+		.method    = HTTP_GET,
+		.handler  = CameraServer::_s_streamHandler,
+		.user_ctx = this 
+	};
+	
+	Serial.printf("Starting Camera Web Server on port: '%d'\n", config.server_port);
+	esp_err_t err = httpd_start(&_stream_httpd, &config);
+	if (err == ESP_OK) {
+		httpd_register_uri_handler(_stream_httpd, &index_uri);
+	}
+	else {
+		Serial.printf("Camera Server init failed with error 0x%x", err);
+		return false;	
+	}
+
+	Serial.println("Camera Web Server Initialized.");
+	return true;
+}
+
+
+/******************************************************************************/
+esp_err_t CameraServer::streamHandler(httpd_req_t *req)
+{
+	camera_fb_t * fb = NULL;
+	esp_err_t res = ESP_OK;
+	size_t _jpg_buf_len = 0;
+	uint8_t * _jpg_buf = NULL;
+	char * part_buf[64];
+
+	res = httpd_resp_set_type(req, _STREAM_CONTENT_TYPE);
+	if(res != ESP_OK){
+		return res;
+	}
+
+	while(true){
+		fb = esp_camera_fb_get();
+		if (!fb) {
+			Serial.println("Camera capture failed");
+			res = ESP_FAIL;
+		} else {
+			if(fb->width > 400){
+				if(fb->format != PIXFORMAT_JPEG){
+					bool jpeg_converted = frame2jpg(fb, 80, &_jpg_buf, &_jpg_buf_len);
+					esp_camera_fb_return(fb);
+					fb = NULL;
+					if(!jpeg_converted){
+						Serial.println("JPEG compression failed");
+						res = ESP_FAIL;
+					}
+				} else {
+					_jpg_buf_len = fb->len;
+					_jpg_buf = fb->buf;
+				}
+			}
+		}
+		if(res == ESP_OK){
+			size_t hlen = snprintf((char *)part_buf, 64, _STREAM_PART, _jpg_buf_len);
+			res = httpd_resp_send_chunk(req, (const char *)part_buf, hlen);
+		}
+		if(res == ESP_OK){
+			res = httpd_resp_send_chunk(req, (const char *)_jpg_buf, _jpg_buf_len);
+		}
+		if(res == ESP_OK){
+			res = httpd_resp_send_chunk(req, _STREAM_BOUNDARY, strlen(_STREAM_BOUNDARY));
+		}
+		if(fb){
+			esp_camera_fb_return(fb);
+			fb = NULL;
+			_jpg_buf = NULL;
+		} else if(_jpg_buf){
+			free(_jpg_buf);
+			_jpg_buf = NULL;
+		}
+		if(res != ESP_OK){
+			break;
+		}
+		//Serial.printf("MJPG: %uB\n",(uint32_t)(_jpg_buf_len));
+	}
+	return res;
 }

@@ -1,3 +1,0 @@
-@TODO change to esp wifi and http server libraries
-@TODO send image from esp32 to portenta through http
-@TODO store images on portenta sd card as video

@@ -12,7 +12,6 @@ const camera_config_t camera_config = {
 	.pin_xclk = XCLK_GPIO_NUM,
 	.pin_sscb_sda = SIOD_GPIO_NUM,
 	.pin_sscb_scl = SIOC_GPIO_NUM,
-
 	.pin_d7 = Y9_GPIO_NUM,
 	.pin_d6 = Y8_GPIO_NUM,
 	.pin_d5 = Y7_GPIO_NUM,
@@ -31,14 +30,15 @@ const camera_config_t camera_config = {
 	.ledc_channel = LEDC_CHANNEL_0,
 
 	// Image settings
-	.pixel_format   = PIXFORMAT_RGB565,   // raw color, 2 bytes/pixel
-	.frame_size = FRAMESIZE_UXGA,   // Use UXGA (1600x1200), limit if no PSRAM
+	.pixel_format   = PIXFORMAT_JPEG,
+	.frame_size = FRAMESIZE_SVGA,   // Use UXGA (1600x1200), limit if no PSRAM
 
 	// Buffer and memory settings
-	.jpeg_quality = 0, // Lower number = better quality (0-63)
-	.fb_count = 1, // Set to 2 if using PSRAM
+	.jpeg_quality = 10, // Lower number = better quality (0-63)
+	.fb_count = 2, // Set to 2 if using PSRAM
 	.fb_location = CAMERA_FB_IN_PSRAM, // Use PSRAM if available
-	.grab_mode = CAMERA_GRAB_LATEST
+	.grab_mode = CAMERA_GRAB_LATEST,
+	.sccb_i2c_port = 0,
 };
 
 
