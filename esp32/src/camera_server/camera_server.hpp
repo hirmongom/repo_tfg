@@ -26,8 +26,8 @@ public:
 	bool begin();
 
 private:
-	const char *_ssid = "SSID";
-	const char *_password = "PASSWORD";
+	const char *_ssid = "EXTENDED_MOVISTAR_BE3B";
+	const char *_password = "a12fg45ca";
 	static constexpr const char* _STREAM_CONTENT_TYPE = 
 		"multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 	static constexpr const char* _STREAM_BOUNDARY = 
