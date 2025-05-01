@@ -16,6 +16,10 @@ void setup()
 	}
 
 	while (!camera.capture());
+	delay(2000);
+	while (!camera.capture());
+	delay(2000);
+	while (!camera.capture());
 }
 
 

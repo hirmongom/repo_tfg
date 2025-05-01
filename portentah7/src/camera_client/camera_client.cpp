@@ -8,6 +8,10 @@ bool CameraClient::begin()
 		return false;
 	}
 
+	if (mountSDCard()) {
+		_have_fs = true;
+	}
+
 	if (!serverConnect()) {
 		return false;
 	}
@@ -20,13 +24,13 @@ bool CameraClient::begin()
 /******************************************************************************/
 bool CameraClient::capture()
 {
+	// @TODO make my own structs to manage both http and jpegs
 	HttpRequest request(_interface, HTTP_GET, "http://192.168.1.32/capture");
 	HttpResponse *response = request.send();
 	if (response) {
 		Serial.print("Status code: ");
 		Serial.println(response->get_status_code());
 
-		// Print all headers
 		Serial.println("Headers:");
 		vector<string*> fields = response->get_headers_fields();
 		vector<string*> values = response->get_headers_values();
@@ -38,12 +42,16 @@ bool CameraClient::capture()
 			Serial.println(values[i]->c_str());
 		}
 
-		Serial.println("Body (binary image):");
-		
-		uint8_t *body   = static_cast<uint8_t *>(response->get_body());
-		size_t length   = response->get_body_length();
+		uint8_t *body = static_cast<uint8_t *>(response->get_body());
+		size_t length = response->get_body_length();
 
-		Serial.write(body, length);
+		if (_have_fs) {
+			writeImageToSDCard(body, length);
+		}
+		
+		if (++_frame_count == std::numeric_limits<uint32_t>::max()) {
+			_frame_count = 0;
+		}
 
 		return true;
 	}
@@ -63,10 +71,10 @@ bool CameraClient::beginWiFi()
 	}
 
 	WiFi.config(
-		IPAddress(192, 168, 1, 254), // IP
-		IPAddress(0, 0, 0, 0),	// DNS
-		IPAddress(192, 168, 1, 254),	// Gateway
-		IPAddress(255, 255, 255, 0)	// Subnet mask
+		IPAddress(192, 168, 1, 254), 		// IP
+		IPAddress(0, 0, 0, 0),					// DNS
+		IPAddress(192, 168, 1, 254),		// Gateway
+		IPAddress(255, 255, 255, 0)			// Subnet mask
 	);
 
 	int status = WiFi.beginAP(_ssid, _password);
@@ -94,5 +102,58 @@ bool CameraClient::serverConnect()
 	Serial.println();
 
 	Serial.println("Connected to server");
+	return true;
+}
+
+
+/******************************************************************************/
+bool CameraClient::mountSDCard()
+{
+	int err =  _fs.mount(&_block_device);
+  if (err) {
+    // Reformat if we can't mount the filesystem
+    // this should only happen on the first boot
+    Serial.println("No filesystem found, formatting... ");
+    err = _fs.reformat(&_block_device);
+  }
+  if (err) {
+     Serial.println("Error formatting SDCARD ");
+		 return false;
+  }
+
+	Serial.println("FileSystem mounted");
+	return true;
+}
+
+
+/******************************************************************************/
+bool CameraClient::writeImageToSDCard(uint8_t *buf, size_t len)
+{
+	if (!_have_fs) {
+		Serial.println("FileSystem has not been mounted");
+		return false;
+	}
+
+	char filename[32];
+	snprintf(filename, sizeof(filename), "/fs/frame%lu.jpeg", _frame_count);
+
+	FILE *fp = fopen(filename, "wb");
+	if (fp == NULL) {
+		Serial.println("Failed to open file");
+		return false;
+	}
+	
+	size_t written = fwrite(buf, 1, len, fp);
+	fclose(fp);
+
+	if (written != len) {
+		Serial.println("Failed to write complete file");
+		return false;
+	}
+
+	Serial.print("Written ");
+	Serial.print(written);
+	Serial.println(" bytes to SDCard");
+
 	return true;
 }
