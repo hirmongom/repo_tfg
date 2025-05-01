@@ -16,34 +16,33 @@
 
 #include "camera_config.hpp"
 
-#define PART_BOUNDARY "123456789000000000000987654321"
-
 
 class CameraServer
 {
 public:
-	CameraServer() = default; 
+	CameraServer(): 
+		_ip(192, 168, 1, 32),
+		_gateway(192, 168, 1, 1),
+		_subnet(255, 255, 255, 0) {}
 	bool begin();
 
 private:
-	const char *_ssid = "EXTENDED_MOVISTAR_BE3B";
-	const char *_password = "a12fg45ca";
-	static constexpr const char* _STREAM_CONTENT_TYPE = 
-		"multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
-	static constexpr const char* _STREAM_BOUNDARY = 
-		"\r\n--" PART_BOUNDARY "\r\n";
-	static constexpr const char* _STREAM_PART = 
-		"Content-Type: image/jpeg\r\n"
-		"Content-Length: %u\r\n\r\n";
-	httpd_handle_t _stream_httpd = NULL;
+	const char *_ssid = "PortentaHost";
+	const char *_password = "default123";
+	const IPAddress _ip;
+	const IPAddress _gateway;
+	const IPAddress _subnet;
+	const uint16_t _port = 80;
+	httpd_handle_t _capture_httpd = NULL;
+
 private:
 	bool beginWiFi();
 	bool beginCam();
 	bool beginCamServer();
-	esp_err_t streamHandler(httpd_req_t *req);
-	static esp_err_t _s_streamHandler(httpd_req_t *req) {
+	esp_err_t captureHandler(httpd_req_t *req);
+	static esp_err_t _s_captureHandler(httpd_req_t *req) {
 		auto *self = static_cast<CameraServer*>(req->user_ctx);
-		return self->streamHandler(req);
+		return self->captureHandler(req);
 	}
 };
 
