@@ -33,6 +33,7 @@ void setup()
 void loop()
 {
 	http_response_t resp;
+	Image img;
 
 	if (camera.capture(resp)) {
 		String msg = resp.to_string().c_str();
@@ -40,9 +41,22 @@ void loop()
 
 		print_hex_dump(resp.body, resp.body_len, 16, 64);
 		std::string dump = hex_dump_to_string(resp.body, resp.body_len, 16);
-
+		
 		filesystem.writeToFile("image.jpeg", resp.body, resp.body_len);
 		filesystem.writeToFile("hexdump.txt", (uint8_t *)dump.data(), dump.size());
+
+		std::string().swap(dump);	// Free
+
+		if (img.load(resp.body, resp.body_len)) {
+			const uint16_t *buffer = img.getBuffer();
+			int size = img.getWidth() * img.getHeight();
+
+			std::string raw_data(reinterpret_cast<const char *>(buffer), size * sizeof(uint16_t));
+			filesystem.writeToFile("decoded.txt", (uint8_t *)raw_data.data(), raw_data.size());
+		}
+		else {
+			Serial.println("Failed to process image");
+		}
 	}
 
 	// delay(2000);
