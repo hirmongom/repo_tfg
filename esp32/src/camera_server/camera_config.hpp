@@ -30,8 +30,8 @@ const camera_config_t camera_config = {
 	.ledc_channel = LEDC_CHANNEL_0,
 
 	// Image settings
-	.pixel_format   = PIXFORMAT_JPEG,
-	.frame_size = FRAMESIZE_SVGA,   // Use UXGA (1600x1200), limit if no PSRAM
+	.pixel_format = PIXFORMAT_JPEG,
+	.frame_size = FRAMESIZE_UXGA,   // Use UXGA (1600x1200), limit if no PSRAM
 
 	// Buffer and memory settings
 	.jpeg_quality = 10, // Lower number = better quality (0-63)

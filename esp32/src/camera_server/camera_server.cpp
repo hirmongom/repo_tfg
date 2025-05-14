@@ -105,7 +105,8 @@ esp_err_t CameraServer::captureHandler(httpd_req_t *req)
 	if (err != ESP_OK) {
 		return err;
 	}
-
+	Serial.print("fb len = ");
+	Serial.println(fb->len);
 	err = httpd_resp_send(req, (const char *)fb->buf, fb->len);
 
 	esp_camera_fb_return(fb);

@@ -27,8 +27,8 @@ public:
 	bool begin();
 
 private:
-	const char *_ssid = "PortentaHost";
-	const char *_password = "default123";
+	const char *_ssid = "ssid";
+	const char *_password = "password";
 	const IPAddress _ip;
 	const IPAddress _gateway;
 	const IPAddress _subnet;
