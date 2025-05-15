@@ -16,6 +16,9 @@ bool CameraServer::begin()
 		return false;
 	}
 
+	pinMode(_flash_led, OUTPUT);
+	digitalWrite(_flash_led, HIGH);
+
 	Serial.println("Camera Server Started at:");
 	Serial.print("\thttp://");
   Serial.println(WiFi.localIP());
@@ -96,6 +99,7 @@ esp_err_t CameraServer::captureHandler(httpd_req_t *req)
 	esp_err_t err = ESP_OK;
 
 	fb = esp_camera_fb_get();
+	
 	if (!fb) {
 		Serial.println("Camera capture failed");
 		return httpd_resp_send_500(req);

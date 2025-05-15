@@ -34,6 +34,7 @@ private:
 	const IPAddress _subnet;
 	const uint16_t _port = 80;
 	httpd_handle_t _capture_httpd = NULL;
+	const uint8_t _flash_led = 4;
 
 private:
 	bool beginWiFi();
