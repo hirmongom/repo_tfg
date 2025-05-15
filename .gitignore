@@ -1,3 +1,5 @@
 .vscode/
 .pio
 .venv/
+__pycache__/
+*.avi
