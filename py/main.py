@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import time
 
-url = "http://192.168.1.32/capture"
+url = "http://192.168.32.1/frame"
 output_path = "output.avi"
 fps = 10
 

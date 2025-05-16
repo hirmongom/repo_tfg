@@ -3,6 +3,7 @@
 
 
 #include <Arduino.h>
+#include <WiFiAP.h>
 #include <WiFi.h>
 #include <WiFiType.h>
 
@@ -21,14 +22,14 @@ class CameraServer
 {
 public:
 	CameraServer(): 
-		_ip(192, 168, 1, 32),
-		_gateway(192, 168, 1, 1),
+		_ip(192, 168, 32, 1),
+		_gateway(192, 168, 32, 1),
 		_subnet(255, 255, 255, 0) {}
 	bool begin();
 
 private:
-	const char *_ssid = "ssid";
-	const char *_password = "password";
+	const char *_ssid = "tfg_ssid";
+	const char *_password = "tfg_password123$";
 	const IPAddress _ip;
 	const IPAddress _gateway;
 	const IPAddress _subnet;

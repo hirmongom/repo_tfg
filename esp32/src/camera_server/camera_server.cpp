@@ -21,7 +21,8 @@ bool CameraServer::begin()
 
 	Serial.println("Camera Server Started at:");
 	Serial.print("\thttp://");
-  Serial.println(WiFi.localIP());
+  Serial.print(WiFi.softAPIP());
+	Serial.println("/frame");
 	return true;
 }
 
@@ -34,18 +35,19 @@ bool CameraServer::beginWiFi()
 		return false;
 	}
 	
-	Serial.print("Connecting to WiFi.");
-	WiFi.config(_ip, IPAddress(0, 0, 0, 0), _gateway, _subnet);
-	WiFi.begin(_ssid, _password);
-	WiFi.setSleep(false);
-	while (WiFi.status() != WL_CONNECTED) {
-		delay(500);
-		Serial.print(".");
-	}
-	Serial.println();
+	Serial.print("Starting WiFi AP.");
 
-	Serial.println("WiFi connected.");	
-	return true;
+	WiFi.softAPConfig(_ip, _gateway, _subnet);
+	bool res = WiFi.softAP(_ssid, _password);
+	WiFi.setSleep(false);
+	if (res) {
+		Serial.println("WiFi AP started.");
+		return true;
+	}
+	else {
+		Serial.println("Failed to start softAP");
+		return false;
+	}
 }
 
 
@@ -72,7 +74,7 @@ bool CameraServer::beginCamServer()
 	config.server_port = _port;
 
 	httpd_uri_t capture_uri = {
-		.uri       = "/capture",
+		.uri       = "/frame",
 		.method    = HTTP_GET,
 		.handler  = CameraServer::_s_captureHandler,
 		.user_ctx = this 
