@@ -41,6 +41,7 @@ private:
 	bool beginWiFi();
 	bool beginCam();
 	bool beginCamServer();
+	void configureSensor();
 	esp_err_t captureHandler(httpd_req_t *req);
 	static esp_err_t _s_captureHandler(httpd_req_t *req) {
 		auto *self = static_cast<CameraServer*>(req->user_ctx);

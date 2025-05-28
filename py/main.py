@@ -10,6 +10,8 @@ fps = 10
 first_frame = None
 writer = None
 
+cv2.namedWindow("Live", cv2.WINDOW_AUTOSIZE)
+
 while True:
 	try:
 		response = requests.get(url, timeout = 2)
