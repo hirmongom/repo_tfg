@@ -128,7 +128,7 @@ void CameraServer::configureSensor()
 	s->set_exposure_ctrl(s, 1);		// enable automatic exposure control
 	s->set_aec2(s, 0);						// disable second exposure algorithm (AEC2)
 	s->set_ae_level(s, -2);				// Bias automatic exposure towards underexposure
-	s->set_aec_value(s, 60);			// Limit max exposure time
+	s->set_aec_value(s, 20);			// Limit max exposure time
 	s->set_gain_ctrl(s, 1);				// enable gain control to compensate brightness
 	s->set_agc_gain(s, 20);				// moderate gain to boost brightness
 	s->set_whitebal(s, 0);				// disable auto white balance
